@@ -1,176 +1,209 @@
-# BillSense AI: Smart Bill & Invoice Assistant for Small Businesses
+# BillSense AI: Smart Bill & Invoice Assistant
 
-> **BillSense AI** is an intelligent full-stack document processing, validation, and financial insights platform engineered specifically for small business owners handling high volumes of physical/digital bills, receipts, and invoices (in English, Telugu, or regional scripts).
+An AI-powered Intelligent Document Processing app for small businesses. Upload an invoice, bill or receipt (photo or PDF, English or Telugu) and BillSense AI reads it, extracts the data, classifies it, validates it, and turns your documents into spending insights.
 
----
-
-## 🌐 Live Demo & Deployment Links
-
-- 🖥️ **Live Frontend Application (Vercel)**: `https://your-app-name.vercel.app` *(Replace with deployed URL)*
-- ⚙️ **Live Backend API (Render)**: `https://your-api-name.onrender.com/api` *(Replace with deployed URL)*
-- 📹 **Demo Video / Walkthrough**: `https://youtube.com/watch?v=your-demo-video` *(Replace with demo video link)*
+**Live Demo:** `<add deployed frontend link>`
+**Backend API:** `<add deployed backend link>`/api/health
+**Demo Video:** `<add demo video link>`
 
 ---
 
-## 🌟 Key Features
+## Problem Statement
 
-1. **JWT Business Authentication**: Secure user registration & login using bcrypt password hashing and JWT authorization middleware. Data is strictly isolated per business owner.
-2. **Multi-Format In-Memory Upload**: Single or batch drag-and-drop file upload supporting JPG, PNG, WEBP, and PDF up to 10 MB. Files are uploaded directly from memory to Supabase Storage.
-3. **Google Gemini 2.5 Flash AI Extraction**: Server-side multimodal AI extraction returning strict structured JSON data (`document_type`, `vendor_name`, `invoice_number`, `date`, `due_date`, `currency`, `line_items`, `subtotal`, `gst_percent`, `gst_amount`, `total`, `language_detected`, `confidence`, `summary`).
-4. **Regional & Telugu Bill Recognition**: Native recognition of printed and handwritten bills in English, Telugu, or mixed English+Telugu scripts.
-5. **Deterministic Rule-Based Validation Engine**: Server-side mathematical checks:
-   - Line items sum check vs `subtotal`.
-   - GST percentage calculation check (`gst_amount = subtotal × gst_percent / 100`).
-   - Final total verification (`subtotal + gst_amount = total`).
-   - Duplicate document prevention (matches vendor + invoice # or vendor + date + total).
-   - Status tagging (`Valid` 🟢, `Warning` 🟡, `Error` 🔴) with detailed issue descriptions.
-6. **Side-by-Side Review Workspace**: Original document preview (left) side-by-side with editable fields and itemized line items table (right). Live re-validation upon editing & saving.
-7. **Interactive Visual Analytics**: Modern Stripe/Linear-styled Dashboard featuring Recharts metrics: Indian currency formatting (`en-IN`), spending by category donut chart, top 5 vendors horizontal bar chart, and monthly spending trajectory.
-8. **Filtered Document Repository & CSV Export**: Searchable and filterable document list with 1-click CSV export capability.
-9. **"Ask Your Documents" AI Chat Assistant**: Q&A interface powered by Gemini 2.5 Flash, returning natural-language answers strictly grounded in your business documents context.
+Small businesses handle large volumes of invoices, bills, and receipts in different formats, languages, and quality levels. Processing them manually is time-consuming, causes data entry errors, lets duplicate or incorrect invoices go unnoticed, and leaves owners without a clear view of their spending.
 
----
+## Solution
 
-## 🛠️ Tech Stack
+BillSense AI automates the whole workflow:
 
-- **Frontend**: React 18, Vite, React Router v6, Tailwind CSS v4, Axios, Recharts, Lucide Icons.
-- **Backend**: Node.js, Express.js, JWT, bcryptjs, Zod Validation, Multer memory storage.
-- **Database & Cloud Storage**: Supabase PostgreSQL + Supabase Storage ("documents" public bucket).
-- **AI Engine**: Google Gemini API (`gemini-2.5-flash`), executed strictly server-side.
+| Problem | What BillSense AI does |
+|---|---|
+| Slow manual reading | AI extracts the data automatically |
+| Messy, mixed documents | AI classifies each document (invoice, utility bill, rent receipt, and more) |
+| Errors and duplicates | A rule-based validation engine checks totals, GST, missing fields, and repeats |
+| No insights | Dashboard with charts, plus an "Ask your documents" AI chat |
 
----
+## Features
 
-## 📁 Repository Project Structure
+- **Secure authentication:** register and login with JWT and bcrypt. Each user sees only their own documents.
+- **Smart upload:** drag-and-drop JPG, PNG, or PDF files (up to 10 MB), with a processing status for each file.
+- **AI extraction (Google Gemini):** vendor, invoice number, dates, line items, subtotal, GST, total, language, confidence score, and a plain-English summary. Works with English, Telugu, and mixed-language documents.
+- **Classification:** document type (Purchase Invoice, Sales Invoice, Utility Bill, Rent Receipt, Salary/Expense Receipt, Other) and expense category.
+- **Validation engine:**
+  - line items add up to the subtotal
+  - GST amount and final total are correct
+  - duplicate invoice detection
+  - missing fields and low-confidence extraction flagged
+  - status shown as Valid, Warning, or Error with readable messages
+- **Review screen:** compare the original document with the extracted fields side by side, edit any value, and re-validate.
+- **Dashboard:** total documents, total spend, flagged documents, duplicates caught, spend by category, top vendors, and monthly trend.
+- **Ask your documents:** ask questions like "How much did I spend on rent this year?" and get answers grounded only in your own data.
+- **Search, filter, and CSV export** for your documents.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React.js, Vite, React Router, Tailwind CSS, Axios, Recharts |
+| Backend | Node.js, Express.js, JWT, bcrypt, Zod, Multer |
+| Database and storage | Supabase PostgreSQL and Supabase Storage |
+| AI | Google Gemini API (called only from the backend) |
+| Deployment | Vercel (frontend), Render (backend), Supabase (database) |
+
+## Architecture
+
+```
+React (Vite)  --->  Express API  --->  Supabase PostgreSQL
+ (Vercel)           (Render)    \-->  Supabase Storage (files)
+                         |
+                         +--->  Google Gemini API (extraction + chat)
+```
+
+The AI key is stored only in backend environment variables and is never exposed to the browser.
+
+## Project Structure
 
 ```
 Billsense/
-├── client/                      # React + Vite Frontend Application
-│   ├── src/
-│   │   ├── components/          # Sidebar, ProtectedLayout navigation components
-│   │   ├── context/             # AuthContext authentication provider
-│   │   ├── pages/               # Login, Register, Dashboard, Upload, ReviewDocument, Documents, AskAI
-│   │   ├── services/            # Axios API instance with JWT interceptors
-│   │   ├── App.jsx              # Application router
-│   │   └── main.jsx             # React DOM entry point
-│   ├── .env.example             # Client environment template
-│   ├── vercel.json              # Vercel SPA routing rewrite configuration
-│   └── package.json
-│
-├── server/                      # Express Node.js Backend Server
-│   ├── src/
-│   │   ├── config/              # Supabase DB & Storage client
-│   │   ├── middleware/          # Auth JWT, rate limiters, central error handler
-│   │   ├── routes/              # Auth, Documents, Dashboard, and Chat API routes
-│   │   ├── utils/               # Gemini AI extractor, rule validation engine, Zod schemas
-│   │   └── index.js             # Express server entry point
-│   ├── .env.example             # Server environment template
-│   └── package.json
-│
-├── sample_documents/            # Directory for demo PDF and image sample bills
-├── supabase_schema.sql          # Database tables and indexes SQL file
-├── supabase_storage.sql         # Supabase Storage bucket & policy setup SQL file
-└── README.md                    # System documentation
+├── client/              # React + Vite frontend
+├── server/              # Express backend
+├── sample_documents/    # Sample files for testing the demo
+├── supabase_schema.sql  # Database tables
+└── README.md
 ```
 
----
+## Getting Started (Local Setup)
 
-## 📋 Environment Variables Reference
+### Prerequisites
 
-### Backend (`/server/.env`)
+- Node.js 18 or newer
+- A Supabase project (free tier works)
+- A Google Gemini API key from Google AI Studio
 
-| Variable Name | Purpose | Where Set |
-|---|---|---|
-| `PORT` | HTTP Server Port (default `5000` locally) | Render / Server Environment |
-| `CLIENT_URL` | Allowed CORS origins (e.g., `http://localhost:5173,https://your-app.vercel.app`) | Render / Server Environment |
-| `JWT_SECRET` | Secret key for signing and verifying JWT authentication tokens | Render / Server Environment |
-| `GEMINI_API_KEY` | Google Gemini API Key for document extraction & chat Q&A | Render / Server Environment |
-| `SUPABASE_URL` | Supabase Project URL (`https://xyz.supabase.co`) | Render / Server Environment |
-| `SUPABASE_KEY` | Supabase Service Role Key or Anon Key for DB & Storage access | Render / Server Environment |
+### 1. Clone the repository
 
-### Frontend (`/client/.env`)
+```bash
+git clone <your-repo-url>
+cd Billsense
+```
 
-| Variable Name | Purpose | Where Set |
-|---|---|---|
-| `VITE_API_URL` | Full URL to Express API endpoints including `/api` suffix (e.g. `https://your-api.onrender.com/api`) | Vercel / Client Environment |
+### 2. Set up Supabase
 
----
+1. Open the **SQL Editor** in your Supabase project, then paste and run `supabase_schema.sql`.
+2. Go to **Storage** and create a **public** bucket named `documents`.
+3. Copy your **Project URL** and **secret (service_role) key** from Project Settings, then API Keys.
 
-## 🗄️ Database & File Storage Setup (Supabase)
+### 3. Configure environment variables
 
-1. Log in to [Supabase](https://supabase.com) and create a PostgreSQL project.
-2. Open the **SQL Editor** in your Supabase dashboard:
-   - Run the contents of `supabase_schema.sql` to create `users`, `documents`, and `line_items` tables and indexes.
-   - Run the contents of `supabase_storage.sql` to create the public storage bucket named **`documents`** and set storage access policies.
+Copy the example files and fill in your own values:
 
----
+```bash
+cp server/.env.example server/.env
+cp client/.env.example client/.env
+```
 
-## ⚡ Local Setup & Execution Guide
+**server/.env**
 
-### 1. Configure Environment Files
-Copy templates and create local `.env` files:
-- `server/.env` (fill in `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET`)
-- `client/.env` (`VITE_API_URL=http://localhost:5000/api`)
+| Variable | Purpose |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_KEY` | Supabase secret (service_role) key. Backend only. |
+| `JWT_SECRET` | Long random string used to sign login tokens |
+| `GEMINI_API_KEY` | Google Gemini API key. Backend only. |
+| `PORT` | Server port (default 5000) |
+| `CLIENT_URL` | Frontend URL allowed by CORS (for example `http://localhost:5173`) |
 
-### 2. Install Dependencies & Start
+**client/.env**
 
-#### Backend:
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Backend API base URL (for example `http://localhost:5000/api`) |
+
+> Never commit `.env` files or share your keys. Only the `.env.example` files belong in the repository.
+
+### 4. Install and run
+
+Backend:
+
 ```bash
 cd server
 npm install
-npm run dev
+npm start
 ```
-*Server runs at `http://localhost:5000`*
 
-#### Frontend:
+Frontend (in a second terminal):
+
 ```bash
 cd client
 npm install
 npm run dev
 ```
-*Client runs at `http://localhost:5173`*
 
----
+Open `http://localhost:5173`.
 
-## 🚀 Production Deployment Instructions
+### 5. Try it with the sample documents
 
-### 1. Backend Deployment (Render)
-- **Repository**: Connect your GitHub repository.
-- **Root Directory**: `server`
-- **Environment / Runtime**: `Node`
-- **Build Command**: `npm install`
-- **Start Command**: `npm start`
-- **Environment Variables**: Add `PORT` (`5000`), `CLIENT_URL` (`https://your-app.vercel.app`), `JWT_SECRET`, `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`.
+Register an account, then upload the files in `sample_documents/` in this order:
 
-### 2. Frontend Deployment (Vercel)
-- **Repository**: Connect your GitHub repository.
-- **Root Directory**: `client`
-- **Framework Preset**: `Vite`
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-- **Environment Variables**: Add `VITE_API_URL` set to `https://your-api.onrender.com/api`.
+| File | What it shows |
+|---|---|
+| `01_valid_invoice.pdf` | Clean extraction, status Valid |
+| `04_electricity_bill.pdf` | Classified as Utility Bill |
+| `05_rent_receipt.pdf` | Classified as Rent Receipt |
+| `02_wrong_total_invoice.pdf` | Validation error: total does not match the items and GST |
+| `03_duplicate_invoice.pdf` | Duplicate of file 01 is detected |
 
----
+Then open the dashboard and try the **Ask AI** page.
 
-## 📡 API Endpoints Reference
+## API Overview
 
-### Authentication (`/api/auth`)
-- `POST /api/auth/register` - Create business account.
-- `POST /api/auth/login` - Authenticate & obtain JWT token.
-- `GET /api/auth/me` - Retrieve current authenticated profile.
+All routes are under `/api`.
 
-### Documents (`/api/documents`)
-- `POST /api/documents/upload` - Upload bills directly to Supabase Storage, run Gemini AI extraction & rule validation.
-- `GET /api/documents` - List documents with search, type, category, date range, and status filters.
-- `GET /api/documents/:id` - Fetch document details and line items.
-- `PUT /api/documents/:id` - Edit extracted fields/items and re-run validation engine.
-- `DELETE /api/documents/:id` - Delete document record and remove file from Supabase Storage.
-- `GET /api/documents/export/csv` - Export filtered document records to CSV.
+| Method | Route | Description |
+|---|---|---|
+| POST | `/auth/register` | Create an account |
+| POST | `/auth/login` | Login and receive a JWT |
+| POST | `/documents/upload` | Upload and process documents |
+| GET | `/documents` | List documents (with filters) |
+| GET | `/documents/:id` | Get one document |
+| PUT | `/documents/:id` | Edit and re-validate a document |
+| DELETE | `/documents/:id` | Delete a document |
+| GET | `/documents/export/csv` | Export documents as CSV |
+| GET | `/dashboard/stats` | Dashboard statistics |
+| POST | `/chat/ask` | Ask a question about your documents |
+| GET | `/health` | Health check |
 
-### Dashboard (`/api/dashboard`)
-- `GET /api/dashboard/stats` - Summary metrics and chart datasets formatted with Indian currency (`en-IN`).
+## Deployment
 
-### Ask AI Assistant (`/api/chat`)
-- `POST /api/chat/ask` - Natural language grounded Q&A against user documents using Gemini 2.5 Flash.
-#   B i l l S e n s e  
- #   B i l l S e n s e  
- 
+**Database:** run `supabase_schema.sql` and create the public `documents` storage bucket in Supabase.
+
+**Backend (Render):**
+- Root Directory: `server`
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Environment variables: `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET`, `GEMINI_API_KEY`, `CLIENT_URL` (set to your Vercel URL)
+
+**Frontend (Vercel):**
+- Root Directory: `client`
+- Framework Preset: Vite
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Environment variable: `VITE_API_URL` (your Render URL followed by `/api`)
+
+The free Render tier sleeps when idle, so the first request after a break can take around 50 seconds.
+
+## Security
+
+- Passwords are hashed with bcrypt, and routes are protected with JWT.
+- All request bodies are validated with Zod.
+- CORS is limited to the configured frontend URL, and auth and AI routes are rate limited.
+- API keys live only in backend environment variables.
+- Users can only access their own documents.
+
+## Future Improvements
+
+- Handwritten document support with higher accuracy
+- Telugu and other regional language answers in the chat
+- Accounting software export (Tally, Zoho Books)
+- WhatsApp upload for bills
+- Monthly spending reports by email
