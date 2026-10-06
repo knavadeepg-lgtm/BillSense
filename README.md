@@ -171,3 +171,5 @@ npm run dev
 
 ### Ask AI Assistant (`/api/chat`)
 - `POST /api/chat/ask` - Natural language grounded Q&A against user documents using Gemini 2.5 Flash.
+#   B i l l S e n s e  
+ 
