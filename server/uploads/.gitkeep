@@ -1,0 +1,1 @@
+# Keeps uploads directory in git if needed, files inside are ignored by root .gitignore

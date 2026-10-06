@@ -1,0 +1,25 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Uploaded files
+server/uploads/*
+!server/uploads/.gitkeep
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
